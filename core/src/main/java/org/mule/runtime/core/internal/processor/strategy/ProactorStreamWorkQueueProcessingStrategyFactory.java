@@ -33,7 +33,6 @@ import org.mule.runtime.core.internal.context.thread.notification.ThreadLoggingE
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 
-import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -107,41 +106,6 @@ public class ProactorStreamWorkQueueProcessingStrategyFactory extends ReactorStr
   }
 
   static class ProactorStreamWorkQueueProcessingStrategy extends ProactorStreamProcessingStrategy {
-
-    private final class ProactorSinkWrapper<E> implements ReactorSink<E> {
-
-      private final ReactorSink<E> innerSink;
-
-      private ProactorSinkWrapper(ReactorSink<E> innerSink) {
-        this.innerSink = innerSink;
-      }
-
-      @Override
-      public final void accept(CoreEvent event) {
-        if (retryingCounter.get() > 0) {
-          throw new RejectedExecutionException();
-        }
-        innerSink.accept(event);
-      }
-
-      @Override
-      public final boolean emit(CoreEvent event) {
-        if (retryingCounter.get() > 0) {
-          return false;
-        }
-        return innerSink.emit(event);
-      }
-
-      @Override
-      public E intoSink(CoreEvent event) {
-        return innerSink.intoSink(event);
-      }
-
-      @Override
-      public final void dispose() {
-        innerSink.dispose();
-      }
-    }
 
     private static Logger LOGGER = getLogger(ProactorStreamWorkQueueProcessingStrategy.class);
     private static int SCHEDULER_BUSY_RETRY_INTERVAL_MS = 2;
